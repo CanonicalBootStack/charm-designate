@@ -49,6 +49,7 @@ def check_dns_slaves():
                 reactive.set_state('dns-slaves-config-valid')
                 return
     reactive.remove_state('dns-slaves-config-valid')
+    reactive.remove_state('full-config.rendered')
 
 
 @reactive.when_any('dns-slaves-config-valid',
@@ -117,7 +118,9 @@ def maybe_setup_endpoint(keystone):
 @reactive.when('cluster.connected')
 def expose_rndc_address(cluster):
     rndc_address = ip.get_relation_ip('dns-backend')
-    cluster.set_address('rndc', rndc_address)
+    with is_data_changed('rndc_address', rndc_address) as c:
+        if c:
+            cluster.set_address('rndc', rndc_address)
 
 
 @reactive.when_not('base-config.rendered')
@@ -169,6 +172,7 @@ def update_peers(cluster):
 @reactive.when('db.synched')
 @reactive.when('pool-manager-cache.synched')
 @reactive.when(*COMPLETE_INTERFACE_STATES)
+@reactive.when_not('full-config.rendered')
 def configure_designate_full(*args):
     """Write out all designate config include bootstrap domain info"""
     # If cluster relation is available it needs to passed in
@@ -193,6 +197,7 @@ def configure_designate_full(*args):
             hookenv.log("ensure_api_responding() errored out: {}"
                         .format(str(e)),
                         level=hookenv.ERROR)
+    reactive.set_state('full-config.rendered')
 
 
 def _render_sink_configs(instance, interfaces_list):

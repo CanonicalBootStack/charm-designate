@@ -49,6 +49,7 @@ class TestRegisteredHooks(test_utils.TestRegisteredHooks):
                 'create_servers_and_domains': ('domains.created', ),
                 'run_assess_status_on_every_hook': (
                     'dont-set-assess-status', ),
+                'configure_designate_full': ('full-config.rendered', ),
             },
             'when_any': {
                 'set_dns_config_available': (
